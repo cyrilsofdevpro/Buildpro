@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Request a Design - BuilPro</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="form-container">
+    <h2>Request a Design</h2>
+    <form id="requestForm">
+      <input type="text" id="projectTitle" placeholder="Project Title (e.g. 3-bedroom Duplex Design)" required />
+      
+      <select id="category" required>
+        <option value="">Select Category</option>
+        <option value="Architectural Design">Architectural Design</option>
+        <option value="Structural Design">Structural Design</option>
+        <option value="Quantity Survey">Quantity Survey</option>
+        <option value="Mechanical Design">Mechanical Design</option>
+      </select>
+      
+      <textarea id="description" placeholder="Describe your project in detail..." rows="5" required></textarea>
+      
+      <input type="number" id="budget" placeholder="Estimated Budget (₦)" required />
+      <input type="date" id="deadline" required />
+
+      <button type="submit">Submit Request</button>
+    </form>
+    <p id="requestStatus"></p>
+  </div>
+
+  <script type="module">
+    import { auth, db } from './js/firebase-config.js';
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.11/firebase-auth.js";
+    import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.6.11/firebase-firestore.js";
+
+    const form = document.getElementById("requestForm");
+    const status = document.getElementById("requestStatus");
+    let currentUser = null;
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        currentUser = user;
+      } else {
+        alert("You must be logged in to request a design.");
+        window.location.href = "login.html";
+      }
+    });
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const projectTitle = document.getElementById("projectTitle").value;
+      const category = document.getElementById("category").value;
+      const description = document.getElementById("description").value;
+      const budget = parseFloat(document.getElementById("budget").value);
+      const deadline = document.getElementById("deadline").value;
+
+      try {
+        await addDoc(collection(db, "design_requests"), {
+          userId: currentUser.uid,
+          email: currentUser.email,
+          projectTitle,
+          category,
+          description,
+          budget,
+          deadline,
+          status: "pending",
+          submittedAt: serverTimestamp()
+        });
+
+        status.textContent = "✅ Request submitted successfully!";
+        form.reset();
+      } catch (error) {
+        console.error("Error:", error);
+        status.textContent = "❌ Failed to submit request.";
+      }
+    });
+  </script>
+</body>
+</html>

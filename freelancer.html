@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Freelancer Dashboard - BuilPro</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    button.complete-btn {
+      background: green;
+      color: white;
+      padding: 6px 12px;
+      border: none;
+      border-radius: 4px;
+      margin-top: 6px;
+      cursor: pointer;
+    }
+
+    button.complete-btn:hover {
+      background: darkgreen;
+    }
+
+    li {
+      margin-bottom: 1.5rem;
+      background: #f8f8f8;
+      padding: 1rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    a.chat-link {
+      display: inline-block;
+      margin-top: 6px;
+      color: #007bff;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    a.chat-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="form-container">
+    <h2>Freelancer Dashboard</h2>
+    <div id="freelancerInfo">Loading your application...</div>
+
+    <section id="projectsSection" style="margin-top: 2rem; display: none;">
+      <h3>Your Assigned Projects</h3>
+      <ul id="assignedList">Checking...</ul>
+    </section>
+  </div>
+
+  <script type="module">
+    import { auth, db } from './js/firebase-config.js';
+    import {
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/9.6.11/firebase-auth.js";
+    import {
+      collection, query, where, getDocs, updateDoc, doc
+    } from "https://www.gstatic.com/firebasejs/9.6.11/firebase-firestore.js";
+
+    const infoDiv = document.getElementById("freelancerInfo");
+    const projectsSection = document.getElementById("projectsSection");
+    const assignedList = document.getElementById("assignedList");
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.location.href = "login.html";
+        return;
+      }
+
+      // Load freelancer application
+      const q = query(collection(db, "freelancer_applications"), where("userId", "==", user.uid));
+      const snapshot = await getDocs(q);
+
+      if (snapshot.empty) {
+        infoDiv.innerHTML = `
+          <p>You have not applied yet.</p>
+          <a href="apply.html" class="btn">Apply Now</a>
+        `;
+        return;
+      }
+
+      const docData = snapshot.docs[0].data();
+      const status = docData.status || "pending";
+
+      infoDiv.innerHTML = `
+        <p><strong>Name:</strong> ${docData.fullname}</p>
+        <p><strong>Skills:</strong> ${docData.skills}</p>
+        <p><strong>Portfolio:</strong> <a href="${docData.portfolio}" target="_blank">${docData.portfolio}</a></p>
+        <p><strong>Status:</strong> <span style="color: ${status === 'approved' ? 'green' : 'orange'}">${status.toUpperCase()}</span></p>
+        ${status === 'approved'
+          ? "<p>✅ You are now an approved freelancer. You'll receive job offers when clients request a match.</p>"
+          : "<p>⏳ Your application is still being reviewed.</p>"}
+      `;
+
+      // If approved, show assigned jobs
+      if (status === "approved") {
+        projectsSection.style.display = "block";
+
+        const jobQuery = query(collection(db, "design_requests"), where("assignedTo", "==", user.uid));
+        const jobSnapshot = await getDocs(jobQuery);
+
+        if (jobSnapshot.empty) {
+          assignedList.innerHTML = "<li>No jobs assigned yet.</li>";
+        } else {
+          assignedList.innerHTML = "";
+          jobSnapshot.forEach((docSnap) => {
+            const job = docSnap.data();
+            const jobId = docSnap.id;
+
+            const li = document.createElement("li");
+            li.innerHTML = `
+              <strong>${job.projectTitle}</strong> — ${job.category}<br>
+              Budget: ₦${job.budget} | Deadline: ${job.deadline}<br>
+              Status: <em style="color: ${job.status === 'completed' ? 'green' : '#444'}">${job.status}</em><br>
+              <a href="chat.html?job=${jobId}" class="chat-link">💬 Open Chat</a><br>
+              ${job.status !== "completed"
+                ? `<button class="complete-btn" data-id="${jobId}">Mark as Completed</button>`
+                : ""}
+            `;
+            assignedList.appendChild(li);
+          });
+        }
+      }
+    });
+
+    // Handle "Mark as Completed"
+    document.addEventListener("click", async (e) => {
+      if (e.target.classList.contains("complete-btn")) {
+        const id = e.target.dataset.id;
+        const confirmed = confirm("Are you sure you've completed this job?");
+        if (!confirmed) return;
+
+        const ref = doc(db, "design_requests", id);
+        await updateDoc(ref, { status: "completed" });
+
+        alert("Marked as completed!");
+        location.reload();
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard - BuilPro</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header>
+    <nav>
+      <h1>BuilPro</h1>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="#" id="logoutBtn">Logout</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main class="dashboard">
+    <h2>Welcome, <span id="userName">Loading...</span></h2>
+    <p>Your role: <strong id="userRole">Fetching...</strong></p>
+
+    <section class="requests-section">
+      <h3>Your Project Requests</h3>
+      <ul id="requestsList">Loading your requests...</ul>
+    </section>
+  </main>
+
+  <script type="module">
+    import { auth, db } from './js/firebase-config.js';
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.6.11/firebase-auth.js";
+    import { doc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.6.11/firebase-firestore.js";
+
+    const userNameEl = document.getElementById("userName");
+    const userRoleEl = document.getElementById("userRole");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const requestsList = document.getElementById("requestsList");
+
+    let currentUser = null;
+
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        currentUser = user;
+
+        const uid = user.uid;
+        const userRef = doc(db, "users", uid);
+        const userSnap = await getDoc(userRef);
+
+        if (userSnap.exists()) {
+          const data = userSnap.data();
+          userNameEl.textContent = data.fullname;
+          userRoleEl.textContent = data.role;
+        }
+
+        // Fetch user design requests
+        const q = query(collection(db, "design_requests"), where("userId", "==", uid));
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+          requestsList.innerHTML = "<li>No requests submitted yet.</li>";
+        } else {
+          requestsList.innerHTML = ""; // Clear loading text
+          querySnapshot.forEach((doc) => {
+            const r = doc.data();
+            const li = document.createElement("li");
+            li.innerHTML = `
+              <strong>${r.projectTitle}</strong> — <em>${r.category}</em><br>
+              Status: ${r.status}, Deadline: ${r.deadline}<br>
+              <a href="chat.html?job=${doc.id}" target="_blank" style="color: blue; text-decoration: underline;">💬 Open Chat</a>
+            `;
+            requestsList.appendChild(li);
+          });
+        }
+
+      } else {
+        window.location.href = "login.html";
+      }
+    });
+
+    logoutBtn.addEventListener("click", async () => {
+      await signOut(auth);
+      window.location.href = "login.html";
+    });
+  </script>
+
+</body>
+</html>

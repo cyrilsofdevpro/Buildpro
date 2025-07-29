@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Apply as Freelancer - BuilPro</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="form-container">
+    <h2>Become a Freelancer on BuilPro</h2>
+    <form id="applicationForm">
+      <input type="text" id="fullname" placeholder="Full Name" required />
+      <input type="text" id="skills" placeholder="Skills (e.g. AutoCAD, Revit, QS)" required />
+      <input type="url" id="portfolio" placeholder="Portfolio Link (e.g. Behance, Drive)" required />
+      <textarea id="experience" placeholder="Briefly describe your experience..." rows="5" required></textarea>
+      <button type="submit">Submit Application</button>
+    </form>
+    <p id="statusMessage"></p>
+  </div>
+
+  <script type="module">
+    import { auth, db } from './js/firebase-config.js';
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.11/firebase-auth.js";
+    import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.6.11/firebase-firestore.js";
+
+    const form = document.getElementById("applicationForm");
+    const statusMessage = document.getElementById("statusMessage");
+    let currentUser = null;
+
+    // Ensure user is logged in
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        currentUser = user;
+      } else {
+        alert("You must be logged in to apply as a freelancer.");
+        window.location.href = "login.html";
+      }
+    });
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const fullname = document.getElementById("fullname").value;
+      const skills = document.getElementById("skills").value;
+      const portfolio = document.getElementById("portfolio").value;
+      const experience = document.getElementById("experience").value;
+
+      try {
+        await addDoc(collection(db, "freelancer_applications"), {
+          userId: currentUser.uid,
+          fullname,
+          skills,
+          portfolio,
+          experience,
+          email: currentUser.email,
+          status: "pending",
+          submittedAt: serverTimestamp()
+        });
+
+        statusMessage.textContent = "✅ Application submitted successfully!";
+        form.reset();
+      } catch (error) {
+        console.error("Error submitting application:", error);
+        statusMessage.textContent = "❌ Failed to submit application. Try again.";
+      }
+    });
+  </script>
+</body>
+</html>
