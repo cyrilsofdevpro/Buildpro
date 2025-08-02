@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Fix Products - Admin Panel</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-6">
+  <div class="max-w-4xl mx-auto">
+    <h1 class="text-2xl font-bold text-blue-600 mb-6">🛠 Fix Incomplete Products</h1>
+    <div id="productList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+  </div>
+
+  <script type="module">
+    import { db } from './js/firebase-config.js';
+    import {
+      collection,
+      getDocs,
+      doc,
+      updateDoc
+    } from "https://www.gstatic.com/firebasejs/9.6.11/firebase-firestore.js";
+
+    const productList = document.getElementById("productList");
+
+    async function loadAndFixProducts() {
+      const snapshot = await getDocs(collection(db, "products"));
+
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        const missingFields = [];
+
+        if (!data.name) missingFields.push('name');
+        if (typeof data.price !== 'number') missingFields.push('price');
+        if (!data.imageUrl) missingFields.push('imageUrl');
+
+        if (missingFields.length > 0) {
+          const card = document.createElement("div");
+          card.className = "bg-white p-4 rounded shadow";
+
+          card.innerHTML = `
+            <p class="text-sm mb-2 text-gray-700"><strong>ID:</strong> ${docSnap.id}</p>
+            <p class="text-sm text-red-600 mb-2">Missing: ${missingFields.join(', ')}</p>
+            <form data-id="${docSnap.id}" class="space-y-2">
+              <input type="text" name="name" placeholder="Name" value="${data.name || ''}" class="w-full p-2 border rounded">
+              <input type="number" name="price" placeholder="Price" value="${data.price || ''}" class="w-full p-2 border rounded">
+              <input type="text" name="imageUrl" placeholder="Image URL" value="${data.imageUrl || ''}" class="w-full p-2 border rounded">
+              <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Fix</button>
+              <p class="status text-sm mt-2 text-green-600 hidden">✅ Updated</p>
+            </form>
+          `;
+
+          productList.appendChild(card);
+
+          // Add form handler
+          const form = card.querySelector("form");
+          const status = card.querySelector(".status");
+          form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const productId = form.getAttribute("data-id");
+            const formData = new FormData(form);
+
+            const updateData = {
+              name: formData.get("name"),
+              price: parseFloat(formData.get("price")),
+              imageUrl: formData.get("imageUrl"),
+            };
+
+            await updateDoc(doc(db, "products", productId), updateData);
+            status.classList.remove("hidden");
+            status.textContent = "✅ Updated";
+          });
+        }
+      });
+
+      if (productList.innerHTML.trim() === "") {
+        productList.innerHTML = `<p class="text-gray-600 text-center col-span-full">🎉 All products are complete!</p>`;
+      }
+    }
+
+    loadAndFixProducts();
+  </script>
+</body>
+</html>

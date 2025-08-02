@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BuilPro - Our Services</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f9f9f9;
+      color: #333;
+    }
+
+    header {
+      background-color: #004080;
+      color: #fff;
+      padding: 1rem 2rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 1200px;
+      margin: auto;
+      flex-wrap: wrap;
+    }
+
+    nav h1 {
+      font-size: 1.8rem;
+      font-weight: bold;
+    }
+
+    nav ul {
+      display: flex;
+      list-style: none;
+      gap: 1.2rem;
+      margin: 0;
+      padding: 0;
+    }
+
+    nav ul li a {
+      color: #fff;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    nav ul li a:hover {
+      text-decoration: underline;
+    }
+
+    .section {
+      max-width: 1000px;
+      margin: 3rem auto;
+      padding: 0 1rem;
+    }
+
+    .section h2 {
+      text-align: center;
+      margin-bottom: 2rem;
+      color: #004080;
+    }
+
+    .service-card {
+      background: #fff;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+
+    .service-card h3 {
+      color: #003060;
+      margin-top: 0;
+    }
+
+    .testimonial {
+      background: #fff;
+      padding: 1rem;
+      margin: 1rem auto;
+      border-left: 4px solid #004080;
+      border-radius: 6px;
+      max-width: 800px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .testimonial strong {
+      display: block;
+      margin-top: 0.5rem;
+      color: #004080;
+    }
+
+    .cta {
+      text-align: center;
+      background: #004080;
+      color: #fff;
+      padding: 3rem 1rem;
+      margin-top: 4rem;
+    }
+
+    .cta h2 {
+      margin-bottom: 1rem;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 0.75rem 1.5rem;
+      background-color: #ffcc00;
+      color: #000;
+      text-decoration: none;
+      border-radius: 5px;
+      font-weight: bold;
+      margin-top: 1rem;
+    }
+
+    .btn:hover {
+      background-color: #e6b800;
+    }
+
+    footer {
+      text-align: center;
+      padding: 1rem;
+      background-color: #f0f0f0;
+      margin-top: 4rem;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 768px) {
+      nav {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      nav ul {
+        flex-direction: column;
+        width: 100%;
+        margin-top: 1rem;
+      }
+
+      nav ul li {
+        width: 100%;
+      }
+
+      nav ul li a {
+        display: block;
+        width: 100%;
+        padding: 0.5rem 0;
+      }
+    }
+
+    /* Chatbot Styles */
+    .chatbot {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 300px;
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 9999;
+    }
+
+    .chatbot-header {
+      background: #004080;
+      color: white;
+      padding: 10px;
+      font-weight: bold;
+    }
+
+    .chatbot-body {
+      max-height: 250px;
+      overflow-y: auto;
+      padding: 10px;
+      font-size: 0.9rem;
+    }
+
+    .chatbot-input {
+      display: flex;
+      border-top: 1px solid #ddd;
+    }
+
+    .chatbot-input input {
+      flex: 1;
+      padding: 8px;
+      border: none;
+      outline: none;
+    }
+
+    .chatbot-input button {
+      background: #004080;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+
+    #chat-toggle {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #004080;
+      color: white;
+      border: none;
+      padding: 12px 16px;
+      border-radius: 50%;
+      font-size: 1.2rem;
+      z-index: 9998;
+    }
+
+    #voice-btn {
+      background: #ffcc00;
+      color: black;
+      border: none;
+      padding: 8px 12px;
+      margin-left: 4px;
+      cursor: pointer;
+    }
+
+    #voice-btn:hover {
+      background: #e6b800;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <nav>
+    <h1>BuilPro</h1>
+    <ul>
+      <li><a href="index.html">Home</a></li>
+      <li><a href="services.html">Services</a></li>
+      <li><a href="apply.html">Become a Freelancer</a></li>
+      <li><a href="request.html">Request a Design</a></li>
+      <li><a href="login.html">Login</a></li>
+    </ul>
+  </nav>
+</header>
+
+<section class="section">
+  <h2>Our Services</h2>
+  <div class="service-card"><h3>🧱 Architectural Design</h3><p>We create stunning and functional building plans...</p></div>
+  <div class="service-card"><h3>🏗️ Structural Engineering</h3><p>Strong, safe, and reliable designs using...</p></div>
+  <div class="service-card"><h3>📐 Quantity Surveying</h3><p>Expert estimation and control of construction...</p></div>
+  <div class="service-card"><h3>🛠️ Mechanical Design</h3><p>Custom mechanical systems for ventilation, air...</p></div>
+  <div class="service-card"><h3>📊 Estimation of Quantity</h3><p>Professional estimation of materials and cost...</p></div>
+</section>
+
+<section class="cta">
+  <h2>Ready to Work With Us?</h2>
+  <p>Let professionals handle your building or design project.</p>
+  <a href="request.html" class="btn">Request a Design</a>
+</section>
+
+<!-- Chatbot Toggle Button -->
+<button id="chat-toggle">💬</button>
+
+<!-- Chatbot Box -->
+<div class="chatbot" id="chatbot">
+  <div class="chatbot-header">Chat with BuilPro</div>
+  <div class="chatbot-body" id="chat-body">
+    <p><strong>Bot:</strong> Hi! How can I help you today?</p>
+  </div>
+  <div class="chatbot-input">
+    <input type="text" id="chat-input" placeholder="Type a message..." />
+    <button onclick="sendMessage()">Send</button>
+    <button id="voice-btn">🎤</button>
+  </div>
+</div>
+
+<footer>
+  <p>&copy; 2025 BuilPro. All rights reserved.</p>
+</footer>
+
+<script>
+  const toggleBtn = document.getElementById('chat-toggle');
+  const chatbot = document.getElementById('chatbot');
+  const chatBody = document.getElementById('chat-body');
+  const voiceBtn = document.getElementById('voice-btn');
+
+  toggleBtn.onclick = () => {
+    chatbot.style.display = chatbot.style.display === 'flex' ? 'none' : 'flex';
+  };
+
+  const customReplies = {
+    'design': "You can request a design on our 'Request a Design' page.",
+    'price': "Pricing depends on your project. We'll provide a quote after review.",
+    'freelancer': "To become a freelancer, visit the 'Apply' page.",
+    'services': "We offer Architectural Design, Engineering, Quantity Surveying, Mechanical Design, and more.",
+    'contact': "You can contact us via the contact page or support email.",
+    'location': "We are located across major cities in Nigeria.",
+    'apply': "Visit the 'Become a Freelancer' page to submit your application."
+  };
+
+  function getMockReply(message) {
+    const msg = message.toLowerCase();
+    for (let key in customReplies) {
+      if (msg.includes(key)) return customReplies[key];
+    }
+    return "Thanks for reaching out! A team member will get back to you shortly.";
+  }
+
+  function speakText(text) {
+    const speech = new SpeechSynthesisUtterance(text);
+    speech.lang = 'en-US';
+    window.speechSynthesis.speak(speech);
+  }
+
+  function sendMessage(fromVoice = false, voiceMessage = '') {
+    const input = document.getElementById('chat-input');
+    const message = fromVoice ? voiceMessage : input.value.trim();
+    if (!message) return;
+
+    chatBody.innerHTML += `<p><strong>You:</strong> ${message}</p>`;
+    if (!fromVoice) input.value = '';
+    chatBody.scrollTop = chatBody.scrollHeight;
+
+    const reply = getMockReply(message);
+    setTimeout(() => {
+      chatBody.innerHTML += `<p><strong>Bot:</strong> ${reply}</p>`;
+      speakText(reply);
+      chatBody.scrollTop = chatBody.scrollHeight;
+    }, 400);
+  }
+
+  voiceBtn.onclick = () => {
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.lang = 'en-US';
+    recognition.start();
+    recognition.onresult = (event) => {
+      const voiceInput = event.results[0][0].transcript;
+      sendMessage(true, voiceInput);
+    };
+    recognition.onerror = () => {
+      alert("Sorry, I didn't catch that. Try again.");
+    };
+  };
+</script>
+
+</body>
+</html>

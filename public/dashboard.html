@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard - BuildPro</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+  <header class="bg-white shadow p-4">
+    <nav class="flex justify-between items-center">
+      <h1 class="text-xl font-bold text-blue-700">BuildPro</h1>
+      <ul class="flex gap-4">
+        <li><a href="index.html" class="text-blue-600 hover:underline">Home</a></li>
+        <li><a href="#" id="logoutBtn" class="text-red-600 hover:underline">Logout</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main class="max-w-6xl mx-auto p-6">
+    <h2 class="text-2xl font-semibold mb-2">Welcome, <span id="userName" class="text-blue-600">Loading...</span></h2>
+    <p class="mb-6">Your role: <strong id="userRole">Fetching...</strong></p>
+
+    <!-- Requests Section -->
+    <section class="mb-10">
+      <h3 class="text-xl font-bold mb-3">Your Project Requests</h3>
+      <ul id="requestsList" class="space-y-2 text-sm">Loading your requests...</ul>
+    </section>
+
+    <!-- Products Section -->
+    <section>
+      <h3 class="text-xl font-bold mb-3">Your Marketplace Listings</h3>
+      <div id="myProducts" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <!-- Product cards here -->
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { auth, db } from './js/firebase-config.js';
+    import {
+      onAuthStateChanged,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/9.6.11/firebase-auth.js";
+    import {
+      doc,
+      getDoc,
+      collection,
+      query,
+      where,
+      getDocs,
+      deleteDoc
+    } from "https://www.gstatic.com/firebasejs/9.6.11/firebase-firestore.js";
+
+    const userNameEl = document.getElementById("userName");
+    const userRoleEl = document.getElementById("userRole");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const requestsList = document.getElementById("requestsList");
+    const myProducts = document.getElementById("myProducts");
+
+    let currentUser = null;
+
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        currentUser = user;
+
+        const uid = user.uid;
+        const userRef = doc(db, "users", uid);
+        const userSnap = await getDoc(userRef);
+
+        if (userSnap.exists()) {
+          const data = userSnap.data();
+          userNameEl.textContent = data.fullname;
+          userRoleEl.textContent = data.role;
+        }
+
+        // Load design requests
+        const designQ = query(collection(db, "design_requests"), where("userId", "==", uid));
+        const designSnap = await getDocs(designQ);
+
+        if (designSnap.empty) {
+          requestsList.innerHTML = "<li>No requests submitted yet.</li>";
+        } else {
+          requestsList.innerHTML = "";
+          designSnap.forEach((doc) => {
+            const r = doc.data();
+            const li = document.createElement("li");
+            li.innerHTML = `
+              <strong>${r.projectTitle}</strong> — <em>${r.category}</em><br>
+              Status: ${r.status}, Deadline: ${r.deadline}<br>
+              <a href="chat.html?job=${doc.id}" target="_blank" class="text-blue-600 underline">💬 Open Chat</a>
+            `;
+            requestsList.appendChild(li);
+          });
+        }
+
+        // Load marketplace products
+        const productQ = query(collection(db, "products"), where("postedBy.uid", "==", uid));
+        const productSnap = await getDocs(productQ);
+
+        if (productSnap.empty) {
+          myProducts.innerHTML = "<p class='text-gray-600 col-span-full'>No products posted yet.</p>";
+        } else {
+          productSnap.forEach((docSnap) => {
+            const p = docSnap.data();
+            const card = document.createElement("div");
+            card.className = "bg-white border rounded p-4 shadow";
+
+            card.innerHTML = `
+              <img src="${p.imageUrl}" alt="${p.name}" class="h-40 w-full object-cover rounded mb-2" />
+              <h4 class="text-lg font-bold">${p.name}</h4>
+              <p class="text-sm text-gray-600">${p.category}</p>
+              <p class="text-blue-700 font-semibold mb-2">₦${p.price}</p>
+              <div class="flex gap-2">
+                <button class="edit-btn bg-yellow-400 text-white px-3 py-1 rounded" data-id="${docSnap.id}">Edit</button>
+                <button class="delete-btn bg-red-600 text-white px-3 py-1 rounded" data-id="${docSnap.id}">Delete</button>
+              </div>
+            `;
+            myProducts.appendChild(card);
+          });
+
+          myProducts.addEventListener("click", async (e) => {
+            if (e.target.classList.contains("delete-btn")) {
+              const id = e.target.dataset.id;
+              await deleteDoc(doc(db, "products", id));
+              e.target.closest("div").remove();
+            }
+
+            if (e.target.classList.contains("edit-btn")) {
+              const id = e.target.dataset.id;
+              window.location.href = `edit-product.html?id=${id}`;
+            }
+          });
+        }
+
+      } else {
+        window.location.href = "login.html";
+      }
+    });
+
+    logoutBtn.addEventListener("click", async () => {
+      await signOut(auth);
+      window.location.href = "login.html";
+    });
+  </script>
+
+</body>
+</html>

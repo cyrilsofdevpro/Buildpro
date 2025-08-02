@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Add Product - BuildPro Market</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-4">
+  <div class="max-w-xl mx-auto bg-white p-6 rounded shadow">
+    <h2 class="text-2xl font-bold mb-4">Post Your Product</h2>
+
+    <form id="productForm" class="space-y-4">
+      <input type="text" id="name" placeholder="Product Name" class="w-full p-2 border rounded" required />
+      <input type="text" id="category" placeholder="Category (e.g. Cement)" class="w-full p-2 border rounded" required />
+      <input type="number" id="price" placeholder="Price" class="w-full p-2 border rounded" required />
+      <textarea id="description" placeholder="Product Description" class="w-full p-2 border rounded" required></textarea>
+      <input type="text" id="imageUrl" placeholder="Image URL" class="w-full p-2 border rounded" required />
+      <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Post Product</button>
+    </form>
+
+    <p id="msg" class="mt-3 text-green-600"></p>
+  </div>
+
+  <script type="module">
+    import { auth, db } from './js/firebase-config.js';
+    import {
+      onAuthStateChanged
+    } from 'https://www.gstatic.com/firebasejs/9.6.11/firebase-auth.js';
+    import {
+      doc,
+      getDoc,
+      addDoc,
+      collection,
+      serverTimestamp
+    } from 'https://www.gstatic.com/firebasejs/9.6.11/firebase-firestore.js';
+
+    const form = document.getElementById('productForm');
+    const msg = document.getElementById('msg');
+
+    let currentUser = null;
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      currentUser = user;
+
+      try {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        const freelancerDoc = await getDoc(doc(db, 'freelancer_applications', user.uid));
+
+        const isAdmin = user.email === 'admin@builpro.com';
+        const isApprovedFreelancer = freelancerDoc.exists() && freelancerDoc.data().status === 'approved';
+
+        if (!isAdmin && !isApprovedFreelancer) {
+          msg.textContent = '❌ Access Denied. Only approved freelancers or admin can post products.';
+          form.style.display = 'none';
+        }
+
+      } catch (err) {
+        console.error('User verification error:', err);
+        msg.textContent = '❌ Error verifying user access.';
+        form.style.display = 'none';
+      }
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const name = document.getElementById('name').value.trim();
+      const category = document.getElementById('category').value.trim();
+      const price = parseFloat(document.getElementById('price').value);
+      const description = document.getElementById('description').value.trim();
+      const imageUrl = document.getElementById('imageUrl').value.trim();
+
+      if (!name || !category || !price || !description || !imageUrl) {
+        msg.textContent = "❌ All fields are required.";
+        return;
+      }
+
+      try {
+        await addDoc(collection(db, 'products'), {
+          name,
+          category,
+          price,
+          description,
+          imageUrl,
+          createdBy: currentUser.uid,
+          createdAt: serverTimestamp(),
+          approved: false // Optional, for review flow
+        });
+
+        msg.textContent = '✅ Product posted successfully!';
+        form.reset();
+      } catch (err) {
+        console.error('Error adding product:', err);
+        msg.textContent = '❌ Failed to post product.';
+      }
+    });
+
+    
+  </script>
+</body>
+</html>

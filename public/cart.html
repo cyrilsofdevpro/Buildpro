@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Your Cart - BuildPro</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-6">
+  <div class="max-w-4xl mx-auto bg-white p-6 rounded shadow">
+    <h1 class="text-2xl font-bold mb-4 text-blue-700">🛒 Your Cart</h1>
+    <div id="cartItems" class="space-y-4 mb-6">Loading cart...</div>
+    <div class="flex justify-between items-center">
+      <p class="text-xl font-semibold text-green-700" id="totalAmount">Total: ₦0</p>
+      <div class="space-y-2">
+        <input type="text" id="buyerName" placeholder="Your Name" class="p-2 border rounded w-full" required />
+        <input type="email" id="buyerEmail" placeholder="Your Email" class="p-2 border rounded w-full" required />
+        <button id="checkoutBtn" class="bg-blue-600 text-white px-4 py-2 rounded w-full hover:bg-blue-700">Pay Now</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { db } from './js/firebase-config.js';
+    import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const cartDiv = document.getElementById("cartItems");
+    const totalAmount = document.getElementById("totalAmount");
+    const checkoutBtn = document.getElementById("checkoutBtn");
+
+    let cart = JSON.parse(localStorage.getItem("cart")) || [];
+    let total = 0;
+
+    if (cart.length === 0) {
+      cartDiv.innerHTML = "<p>Your cart is empty.</p>";
+      checkoutBtn.disabled = true;
+    } else {
+      cartDiv.innerHTML = "";
+
+      for (const id of cart) {
+        const docRef = doc(db, "products", id);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const p = docSnap.data();
+          const item = document.createElement("div");
+          item.className = "flex justify-between items-center border p-3 rounded";
+
+          item.innerHTML = `
+            <div>
+              <h3 class="font-bold">${p.name}</h3>
+              <p class="text-gray-500 text-sm">${p.category}</p>
+              <p class="text-blue-700 font-semibold">₦${p.price}</p>
+            </div>
+            <button class="removeBtn text-red-600 font-bold text-sm" data-id="${id}">Remove</button>
+          `;
+
+          cartDiv.appendChild(item);
+          total += parseFloat(p.price);
+        }
+      }
+
+      totalAmount.textContent = `Total: ₦${total.toLocaleString()}`;
+
+      cartDiv.addEventListener("click", (e) => {
+        if (e.target.classList.contains("removeBtn")) {
+          const id = e.target.dataset.id;
+          cart = cart.filter((pid) => pid !== id);
+          localStorage.setItem("cart", JSON.stringify(cart));
+          location.reload();
+        }
+      });
+    }
+
+    checkoutBtn.addEventListener("click", () => {
+      const email = document.getElementById("buyerEmail").value;
+      const name = document.getElementById("buyerName").value;
+
+      if (!email || !name) return alert("Please enter your name and email.");
+
+      const handler = PaystackPop.setup({
+        key: "pk_test_xxxxxxxxxxxxxxxxxxxxxxxx", // Replace with your Paystack public key
+        email: email,
+        amount: total * 100,
+        currency: "NGN",
+        ref: `BP-${Math.floor(Math.random() * 1000000000)}`,
+        metadata: {
+          custom_fields: [
+            { display_name: "Buyer Name", variable_name: "buyer_name", value: name }
+          ]
+        },
+        callback: async function(response) {
+          const orderRef = doc(db, "orders", response.reference);
+          await setDoc(orderRef, {
+            buyerName: name,
+            buyerEmail: email,
+            products: cart,
+            totalAmount: total,
+            reference: response.reference,
+            status: "Paid",
+            createdAt: new Date().toISOString()
+          });
+
+          localStorage.removeItem("cart");
+          alert("✅ Payment successful! Your order has been saved.");
+          location.href = "marketplace.html";
+        },
+        onClose: function() {
+          alert("❌ Payment window closed.");
+        }
+      });
+
+      handler.openIframe();
+    });
+  </script>
+
+  <script src="https://js.paystack.co/v1/inline.js"></script>
+</body>
+</html>

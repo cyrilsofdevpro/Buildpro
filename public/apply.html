@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Apply as Freelancer - BuilPro</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 py-10">
+  <div class="max-w-xl mx-auto bg-white p-6 rounded shadow">
+    <h2 class="text-2xl font-bold mb-4">Become a Freelancer on BuilPro</h2>
+    
+    <form id="applicationForm" class="space-y-4">
+      <input type="text" id="fullname" placeholder="Full Name" class="w-full p-2 border rounded" required />
+      <input type="text" id="skills" placeholder="Skills (e.g. AutoCAD, Revit, QS)" class="w-full p-2 border rounded" required />
+      <input type="url" id="portfolio" placeholder="Portfolio Link (e.g. Behance, Drive)" class="w-full p-2 border rounded" required />
+      <textarea id="experience" placeholder="Briefly describe your experience..." rows="5" class="w-full p-2 border rounded" required></textarea>
+      <button type="submit" class="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Submit Application</button>
+    </form>
+    
+    <p id="statusMessage" class="mt-4 text-center font-medium"></p>
+  </div>
+
+  <script type="module">
+    import { auth, db } from './js/firebase-config.js';
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const form = document.getElementById("applicationForm");
+    const statusMessage = document.getElementById("statusMessage");
+    let currentUser = null;
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        currentUser = user;
+      } else {
+        alert("You must be logged in to apply as a freelancer.");
+        window.location.href = "login.html";
+      }
+    });
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      if (!currentUser) {
+        statusMessage.textContent = "❌ You must be logged in.";
+        statusMessage.className = "text-red-600";
+        return;
+      }
+
+      const fullname = document.getElementById("fullname").value.trim();
+      const skills = document.getElementById("skills").value.trim();
+      const portfolio = document.getElementById("portfolio").value.trim();
+      const experience = document.getElementById("experience").value.trim();
+
+      if (!fullname || !skills || !portfolio || !experience) {
+        statusMessage.textContent = "❌ Please fill in all fields.";
+        statusMessage.className = "text-red-600";
+        return;
+      }
+
+      try {
+        await setDoc(doc(db, "freelancer_applications", currentUser.uid), {
+          userId: currentUser.uid,
+          fullname,
+          skills,
+          portfolio,
+          experience,
+          email: currentUser.email,
+          status: "pending",
+          submittedAt: serverTimestamp()
+        });
+
+        statusMessage.textContent = "✅ Application submitted successfully!";
+        statusMessage.className = "text-green-600";
+        form.reset();
+      } catch (error) {
+        console.error("Error submitting application:", error);
+        statusMessage.textContent = "❌ Failed to submit application. Try again.";
+        statusMessage.className = "text-red-600";
+      }
+    });
+  </script>
+</body>
+</html>

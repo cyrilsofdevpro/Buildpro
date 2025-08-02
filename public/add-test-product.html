@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Add Test Product</title>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.11/firebase-app.js";
+    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.6.11/firebase-firestore.js";
+    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.6.11/firebase-auth.js";
+
+    // 🔧 Your Firebase config from firebase-config.js
+    const firebaseConfig = {
+      apiKey: "AIzaSyDPWkahDk1jAUh7Ws--WHhdmPnbvhwJB8s",
+      authDomain: "buildpro-cbb6c.firebaseapp.com",
+      projectId: "buildpro-cbb6c",
+      storageBucket: "buildpro-cbb6c.appspot.com",
+      messagingSenderId: "415155145815",
+      appId: "1:415155145815:web:eab37d3796f839d2eda712",
+      measurementId: "G-314ZF46CJ9"
+    };
+
+    // 🔌 Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    // 🔐 Login to allow write (use admin account)
+    const email = "admin@builpro.com"; // your admin email
+    const password = "clemson123"; // replace with real password
+
+    signInWithEmailAndPassword(auth, email, password)
+      .then(async () => {
+        const docRef = await addDoc(collection(db, "products"), {
+          name: "🧱 Test Product",
+          category: "Cement",
+          price: 8000,
+          imageUrl: "https://via.placeholder.com/300x200?text=Test+Product",
+          description: "This is a sample product added for testing.",
+          approved: true,
+          createdAt: Date.now()
+        });
+        alert("✅ Test product added successfully!\nID: " + docRef.id);
+      })
+      .catch((error) => {
+        console.error("❌ Error adding product:", error);
+        alert("❌ Failed: " + error.message);
+      });
+  </script>
+</head>
+<body>
+  <h1 style="text-align: center; margin-top: 100px;">⏳ Adding Test Product...</h1>
+</body>
+</html>
